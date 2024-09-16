@@ -1,5 +1,6 @@
 import cv2
 import os
+import tqdm
 
 DEFAULT_FRAME_RATE = 30  # 默认帧率
 
@@ -44,6 +45,7 @@ def generateScreenshot(video_path):
     
     return
 
+
 def generateSymmetry(pic_path):
     img = cv2.imread(pic_path)
     if img is None:
@@ -58,18 +60,55 @@ def generateSymmetry(pic_path):
     right_half_mirrored = cv2.flip(left_half, 1)
     left_based_mirrored_img = cv2.hconcat([left_half, right_half_mirrored])
     left_based_mirrored_img_path = pic_path.replace(".jpg", "_left_based_mirrored.jpg")
-    cv2.imwrite(left_based_mirrored_img_path, left_based_mirrored_img)
-    print(f"Saved left-based mirrored image as {left_based_mirrored_img_path}")
+    if not os.path.exists(os.path.dirname(left_based_mirrored_img_path)):
+        cv2.imwrite(left_based_mirrored_img_path, left_based_mirrored_img)
+        print(f"Saved left-based mirrored image as {left_based_mirrored_img_path}")
     
     # 生成以右半部分为基准的镜像对称图片
     right_half = img[:, width // 2:]
     left_half_mirrored = cv2.flip(right_half, 1)
     right_based_mirrored_img = cv2.hconcat([left_half_mirrored, right_half])
     right_based_mirrored_img_path = pic_path.replace(".jpg", "_right_based_mirrored.jpg")
-    cv2.imwrite(right_based_mirrored_img_path, right_based_mirrored_img)
-    print(f"Saved right-based mirrored image as {right_based_mirrored_img_path}")
+    if not os.path.exists(os.path.dirname(right_based_mirrored_img_path)):
+        cv2.imwrite(right_based_mirrored_img_path, right_based_mirrored_img)
+        print(f"Saved right-based mirrored image as {right_based_mirrored_img_path}")
+
+def calculate_orb_similarity(img1, img2):
+    # 初始化ORB检测器
+    orb = cv2.ORB_create()
+    
+    # 检测并计算特征点和描述符
+    keypoints1, descriptors1 = orb.detectAndCompute(img1, None)
+    keypoints2, descriptors2 = orb.detectAndCompute(img2, None)
+    
+    # 创建BFMatcher对象
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    
+    # 匹配描述符
+    matches = bf.match(descriptors1, descriptors2)
+    
+    # 按照距离排序
+    matches = sorted(matches, key=lambda x: x.distance)
+    
+    # 计算相似度
+    similarity = sum([1 - match.distance / 256 for match in matches]) / len(matches)
+    return similarity
+
+def listFiles(directory, suffix):
+    files = []
+    for root, dirs, filenames in os.walk(directory):
+        for filename in filenames:
+            if filename.endswith(suffix):
+                files.append(os.path.join(root, filename))
+    return files
 
 if __name__ == "__main__":
-    # generateScreenshot(r"C:\Users\15532\OneDrive\Code\python\symmetry\video\part1\1.mp4")
+    video_address = r'C:\Users\15532\OneDrive\Code\python\symmetry\video'
+    mp4_files = listFiles(video_address, ".mp4")
     
-    # generateSymmetry(r"C:\Users\15532\OneDrive\Code\python\symmetry\screenshot\1\0.jpg")
+    for file in tqdm.tqdm(mp4_files):
+        generateScreenshot(file)
+    
+    png_files = listFiles("screenshot", ".png")
+    for pic in tqdm.tqdm(png_files):
+        generateSymmetry(pic)
