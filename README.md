@@ -1,3 +1,3 @@
-# symmetry
+# 对称之力
 
-learning the force of symmetry
+必须重获对称之力
