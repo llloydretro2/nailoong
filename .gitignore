@@ -1,5 +1,6 @@
 # Ignore all mp4 files
 *.mp4
 
-# Ignore all png files
+# Ignore all pic files
 *.png
+*.jpg
