@@ -4,3 +4,6 @@
 # Ignore all pic files
 *.png
 *.jpg
+
+# ignore __pycache__
+__pycache__/
